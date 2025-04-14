@@ -1,5 +1,8 @@
 extends CharacterBody3D
 
+#emitted when player is hit by mob
+signal hit 
+
 #How fast the player moves (m/s)
 @export var speed = 14
 #downard acceleration when in the air (m/s^2)
@@ -29,6 +32,9 @@ func _physics_process(delta):
 	if direction != Vector3.ZERO:
 		direction = direction.normalized()
 		$Pivot.basis = Basis.looking_at(direction) #affects the roration of the node
+		$AnimationPlayer.speed_scale = 2
+	else:
+		$AnimationPlayer.speed_scale = 1
 	
 	#ground velocity
 	target_velocity.x = direction.x * speed
@@ -65,6 +71,14 @@ func _physics_process(delta):
 				mob.squash()
 				target_velocity.y = bounce_impluse
 				break # prevent further duplicates
-		
 	
 	move_and_slide() #part of characterbody3d class, moves char smoothly
+	#make the char arc when jumping
+	$Pivot.rotation.x = PI / 6 * velocity.y / jump_impluse
+
+func die():
+	hit.emit()
+	queue_free()
+
+func _on_mob_detector_body_entered(body):
+	die()
